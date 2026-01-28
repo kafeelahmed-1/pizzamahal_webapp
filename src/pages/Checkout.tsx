@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Phone, User } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, User, Wallet } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Header } from '@/components/customer/Header';
 import { CartPanel } from '@/components/cart/CartPanel';
 import { useOrdersContext } from '@/context/OrdersContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 type OrderType = 'delivery' | 'takeaway';
 
@@ -13,6 +19,7 @@ const Checkout = () => {
   const { items, total, clearCart } = useCart();
   const { addOrder } = useOrdersContext();
   const [orderType, setOrderType] = useState<OrderType>('delivery');
+  const [showQR, setShowQR] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -20,6 +27,7 @@ const Checkout = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Validation function
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = 'Name is required';
@@ -31,39 +39,46 @@ const Checkout = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle EasyPaisa payment
+  const handleEasyPaisaPayment = () => {
+    const appUrl = `easypaisa://pay?amount=${total}`;
+    window.location.href = appUrl;
+
+    // Fallback QR if app doesn't open
+    setTimeout(() => setShowQR(true), 1500);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    // Generate order ID
     const orderId = `ORD-${String(Date.now()).slice(-6)}`;
-    
-    // Create order object
+
     const order = {
       id: orderId,
       items,
       customer: formData,
       orderType,
+      paymentMethod: 'easypaisa',
       status: 'pending' as const,
       total,
       createdAt: new Date(),
     };
 
-    // Add order using the hook (this will trigger notifications)
     addOrder(order);
-    
-    // Clear cart and navigate to confirmation
     clearCart();
     navigate('/order-confirmation', {
       state: {
         orderId,
         orderType,
+        paymentMethod: 'easypaisa',
         customer: formData,
         total,
       },
     });
   };
 
+  // Empty cart fallback
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
@@ -85,7 +100,6 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
       <main className="container py-8">
         <button
           onClick={() => navigate('/')}
@@ -96,7 +110,7 @@ const Checkout = () => {
         </button>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          {/* Form */}
+          {/* Checkout Form */}
           <div className="rounded-lg border border-border bg-card p-6">
             <h1 className="font-display text-2xl font-bold text-foreground mb-6">
               Checkout
@@ -134,6 +148,18 @@ const Checkout = () => {
                     Takeaway
                   </button>
                 </div>
+              </div>
+
+              {/* EasyPaisa Payment Button */}
+              <div>
+                <button
+                  type="button"
+                  onClick={handleEasyPaisaPayment}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700 transition-colors"
+                >
+                  <Wallet className="h-6 w-6" />
+                  Pay with EasyPaisa
+                </button>
               </div>
 
               {/* Name */}
@@ -184,7 +210,7 @@ const Checkout = () => {
                 )}
               </div>
 
-              {/* Address (only for delivery) */}
+              {/* Address */}
               {orderType === 'delivery' && (
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -224,7 +250,7 @@ const Checkout = () => {
             <h2 className="font-display text-xl font-bold text-foreground mb-4">
               Order Summary
             </h2>
-            
+
             <div className="space-y-3 mb-6">
               {items.map((item, index) => (
                 <div
@@ -236,9 +262,7 @@ const Checkout = () => {
                       {item.quantity}x {item.name}
                     </p>
                     {item.selectedSize && (
-                      <p className="text-sm text-muted-foreground">
-                        {item.selectedSize}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{item.selectedSize}</p>
                     )}
                     {item.selectedToppings && item.selectedToppings.length > 0 && (
                       <p className="text-sm text-muted-foreground">
@@ -276,6 +300,24 @@ const Checkout = () => {
       </main>
 
       <CartPanel />
+
+      {/* EasyPaisa QR Modal */}
+      <Dialog open={showQR} onOpenChange={setShowQR}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Scan QR Code to Pay with EasyPaisa</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <div className="w-48 h-48 bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-center text-sm text-gray-600">
+              <div>
+                <div className="text-2xl mb-2">📱</div>
+                QR Code for Payment<br />
+                Amount: Rs. {total.toFixed(0)}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

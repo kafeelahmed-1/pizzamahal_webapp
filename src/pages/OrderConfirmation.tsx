@@ -6,6 +6,7 @@ import { CartPanel } from '@/components/cart/CartPanel';
 interface OrderState {
   orderId: string;
   orderType: 'delivery' | 'takeaway';
+  paymentMethod: 'cash' | 'easypaisa';
   customer: {
     name: string;
     phone: string;
@@ -63,13 +64,22 @@ const OrderConfirmation = () => {
               <span className="font-mono text-lg font-bold text-foreground">
                 {orderData.orderId}
               </span>
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                orderData.orderType === 'delivery'
-                  ? 'bg-info/10 text-info'
-                  : 'bg-muted text-muted-foreground'
-              }`}>
-                {orderData.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}
-              </span>
+              <div className="flex gap-2">
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
+                  orderData.orderType === 'delivery'
+                    ? 'bg-info/10 text-info'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {orderData.orderType === 'delivery' ? 'Delivery' : 'Takeaway'}
+                </span>
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
+                  orderData.paymentMethod === 'cash'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {orderData.paymentMethod === 'cash' ? 'Cash on Delivery' : 'EasyPaisa'}
+                </span>
+              </div>
             </div>
 
             <div className="space-y-3 text-sm">

@@ -4,6 +4,8 @@ import { CategoryTabs } from '@/components/customer/CategoryTabs';
 import { ProductCard } from '@/components/customer/ProductCard';
 import { ProductModal } from '@/components/customer/ProductModal';
 import { CartPanel } from '@/components/cart/CartPanel';
+import Hero from '@/components/customer/Hero';
+import Footer from '@/components/customer/Footer';
 import { menuItems, MenuItem, categories } from '@/data/menuData';
 
 const Index = () => {
@@ -40,12 +42,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <Hero />
       <CategoryTabs
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
       />
 
-      <main className="container py-6 sm:py-8 px-4 sm:px-6 animate-fade-in">
+      <main id="menu-section" className="container py-6 sm:py-8 px-4 sm:px-6 animate-fade-in">
         {groupedItems ? (
           // Grouped view when showing all
           <div className="space-y-8 sm:space-y-10">
@@ -91,6 +94,7 @@ const Index = () => {
       />
 
       <CartPanel />
+      <Footer />
     </div>
   );
 };
